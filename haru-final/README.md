@@ -8,7 +8,7 @@
 
 ## 배포 파일
 
-`index.html`, `styles.css`, `app.js`, `cloud.js`, `config.js`를 같은 폴더에 두고 GitHub Pages 등으로 제공합니다. 설치·빌드는 필요 없습니다. 현재 파일은 GitHub에 자동 업로드하지 않았습니다.
+`index.html`, `styles.css`, `app.js`, `cloud.js`, `calendar.js`, `config.js`를 같은 폴더에 두고 GitHub Pages 등으로 제공합니다. 설치·빌드는 필요 없습니다. 현재 파일은 GitHub에 자동 업로드하지 않았습니다.
 
 실행 명령: 이 폴더에서 `python3 -m http.server 8020 --bind 127.0.0.1`
 
@@ -39,10 +39,19 @@
 - 드러커의 결정·예상 결과·실제 결과·강점과 시간 관찰 도구
 - JSON 백업·복원
 
-Google Calendar, 금융 자동 연동, 사진 첨부, 자동 알림은 아직 없습니다. 저술·연구를 제품에 응용한 범위와 출처는 `SOURCES.md`를 참고하세요.
+Google Calendar 읽기 전용 연결을 추가했습니다. 처음에는 `GOOGLE_CALENDAR_SETUP.md`에 따라 공개 OAuth 클라이언트 ID와 Google 동의 설정이 필요합니다. 금융 자동 연동, 사진 첨부, 자동 알림은 아직 없습니다. 저술·연구를 제품에 응용한 범위와 출처는 `SOURCES.md`를 참고하세요.
 
 ## 검증
 
 PostgreSQL RLS와 권한·충돌은 실제 PostgreSQL 엔진에서 검증했습니다. 로그인과 기기 간 저장은 API 모사 브라우저 테스트에서 검증했습니다. 실제 프로젝트의 SQL 실행·실계정 로그인·실제 배포 검증은 완료되지 않았습니다. 현재 클라우드 실행 환경에서는 해당 프로젝트 도메인이 네트워크 정책으로 차단되어 있습니다.
 
 테스트와 운영 설정의 상세 내용은 `SUPABASE_SETUP.md`에 있습니다. 과거 로컬 시안의 변경 이력은 `LOCAL_VERSION_NOTES.md`에 보관하며, 현재 저장 방식은 이 README와 설정 안내를 기준으로 합니다.
+
+## Google Calendar 개발 변경
+
+- 최신 main을 기준으로 별도 로컬 브랜치에서 작업했습니다. 사용자 지시에 따라 게시·배포·원격 푸시는 하지 않았습니다.
+- 홈과 캘린더 화면의 Google 일정을 읽고, 끝난 일정의 실제 시간만 확인해서 기존 시간 기록으로 가져옵니다.
+- Google client secret, 새 Supabase 테이블이나 SQL 변경은 필요 없습니다. 설정·선택은 기존 profile의 선택적 JSON 문자열에 저장합니다.
+- `calendar.js`를 다른 배포 파일과 같은 폴더에 포함합니다.
+- `tests/google-calendar.cjs`로 모사 Google/Supabase API를 이용한 브라우저 검증을 실행합니다. `HARU_TEST_URL`의 기본값은 테스트 서버 포트 8021입니다.
+- 테스트용 Google 응답을 사용한 검증이며 실제 본인 Google 계정 연결은 아직 남아 있습니다.

@@ -36,6 +36,7 @@ Supabase 프로젝트의 **SQL Editor → New query**에서 `supabase/001_haru.s
 - `styles.css`
 - `app.js`
 - `cloud.js`
+- `calendar.js`
 - `config.js`
 
 빌드나 별도의 Node 서버는 필요 없습니다. GitHub Pages의 HTTPS 주소로 실행할 수 있습니다. 이 파일들은 아직 GitHub에 자동 업로드하거나 배포하지 않았습니다. 기존 CEO Diary의 루트 파일을 덮어쓰려면 먼저 백업하거나 별도 저장소·하위 폴더를 사용하세요.
@@ -78,3 +79,7 @@ Supabase 프로젝트의 **SQL Editor → New query**에서 `supabase/001_haru.s
 - `HARU_TEST_URL`, `CHROMIUM_PATH`로 테스트 주소와 Chromium 실행 파일 경로를 바꿀 수 있습니다.
 
 테스트에는 실제 사용자 비밀번호·토큰을 사용하지 않습니다.
+
+## Google Calendar 선택 연결
+
+Supabase 이메일·비밀번호 로그인과 독립된 읽기 전용 Google 인증을 추가했습니다. 새 SQL은 필요하지 않습니다. `GOOGLE_CALENDAR_SETUP.md`의 공개 클라이언트 ID·JavaScript 원본·읽기 범위·테스트 계정 설정을 먼저 완료합니다. Google 토큰은 Supabase 문서나 기기 저장소에 보관하지 않으며 현재 페이지 메모리에서만 사용합니다.

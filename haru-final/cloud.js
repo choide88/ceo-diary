@@ -63,7 +63,8 @@
   function keepSession(data) {
     if (!data?.access_token || !data.refresh_token || !data.user?.id) throw error('AUTH','로그인 정보를 확인할 수 없습니다.');
     session={access_token:data.access_token,refresh_token:data.refresh_token,expires:Date.now()+(data.expires_in||3600)*1000};
-    user={id:data.user.id,email:data.user.email||''};
+    const priorUser=user?.id;user={id:data.user.id,email:data.user.email||''};
+    if(priorUser!==user.id)document.dispatchEvent(new Event('haru:account'));
     try { sessionStorage.setItem(sessionStorageKey,data.refresh_token); } catch {}
   }
   async function refresh() {
@@ -178,7 +179,7 @@
   function logout() {
     const token=session?.access_token;++epoch;clearInterval(polling);session=null;user=null;pending=null;loaded=false;sending=false;syncError='';conflict=false;
     try{sessionStorage.removeItem(sessionStorageKey);}catch{}
-    bridge.setState(bridge.defaults());phase='login';notice='';repaint();
+    document.dispatchEvent(new Event('haru:account'));bridge.setState(bridge.defaults());phase='login';notice='';repaint();
     if(token)raw('/auth/v1/logout?scope=local',{method:'POST',headers:{Authorization:'Bearer '+token}}).catch(()=>{});
   }
   function dialog(title,html) {
@@ -221,7 +222,7 @@
     const controls=document.createElement('div');controls.className='cloud-controls';controls.innerHTML='<button id="cloud-status" class="cloud-status" data-cloud="account">연결 중</button><button id="cloud-account" class="quiet" data-cloud="account">로그인</button>';
     document.querySelector('.topbar')?.after(controls);
     const side=document.querySelector('.sidebar-bottom');if(side)side.childNodes.forEach(n=>{if(n.nodeType===Node.TEXT_NODE&&n.textContent.includes('브라우저'))n.textContent=' 내 계정의 서버에 저장';});
-    const footer=document.querySelector('footer');if(footer)footer.textContent='개인 계정 서버 저장 · Google·금융 자동 연동 및 알림 없음 · 서버 미저장 상태에서는 기기를 옮기기 전 확인해주세요.';
+    const footer=document.querySelector('footer');if(footer)footer.textContent='개인 계정 서버 저장 · Google Calendar 선택 연결 · 금융 자동 연동·알림 없음 · 서버 미저장 상태에서는 기기를 옮기기 전 확인해주세요.';
     if(!publicKeyValid(publicKey)){phase='config';repaint();return;}
     let token='';try{token=sessionStorage.getItem(sessionStorageKey)||'';}catch{}
     if(!token){phase='login';repaint();return;}
@@ -252,5 +253,5 @@
     if(e.target.id==='cloud-login-form'){e.preventDefault();const email=e.target.email.value.trim(),password=e.target.password.value;e.target.password.value='';void login(email,password);}
   });
   window.addEventListener('beforeunload',e=>{if(pending&&loaded){e.preventDefault();e.returnValue='';}});
-  window.HaruSync=Object.freeze({start,commit,isLoaded:()=>loaded,isCloud:()=>!DEMO,gate:()=>!loaded,gateHTML,repaint,accountPanel});
+  window.HaruSync=Object.freeze({start,commit,getUserId:()=>user?.id||null,isLoaded:()=>loaded,isCloud:()=>!DEMO,gate:()=>!loaded,gateHTML,repaint,accountPanel});
 })();
