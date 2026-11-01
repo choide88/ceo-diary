@@ -37,6 +37,8 @@ Supabase 프로젝트의 **SQL Editor → New query**에서 `supabase/001_haru.s
 - `app.js`
 - `cloud.js`
 - `calendar.js`
+- `income-format.js`
+- `time-stats.js`
 - `config.js`
 
 빌드나 별도의 Node 서버는 필요 없습니다. GitHub Pages의 HTTPS 주소로 실행할 수 있습니다. 이 파일들은 아직 GitHub에 자동 업로드하거나 배포하지 않았습니다. 기존 CEO Diary의 루트 파일을 덮어쓰려면 먼저 백업하거나 별도 저장소·하위 폴더를 사용하세요.
