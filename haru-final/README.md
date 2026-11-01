@@ -8,7 +8,7 @@
 
 ## 배포 파일
 
-`index.html`, `styles.css`, `app.js`, `cloud.js`, `calendar.js`, `config.js`를 같은 폴더에 두고 GitHub Pages 등으로 제공합니다. 설치·빌드는 필요 없습니다. 현재 파일은 GitHub에 자동 업로드하지 않았습니다.
+`index.html`, `styles.css`, `app.js`, `cloud.js`, `calendar.js`, `income-format.js`, `config.js`를 같은 폴더에 두고 GitHub Pages 등으로 제공합니다. 설치·빌드는 필요 없습니다. 현재 파일은 GitHub에 자동 업로드하지 않았습니다.
 
 실행 명령: 이 폴더에서 `python3 -m http.server 8020 --bind 127.0.0.1`
 
@@ -63,3 +63,9 @@ Google Tasks 읽기 전용 선택 연결을 추가했습니다. 불러온 일정
 알바는 실제 시간 기록의 분류로 저장합니다. 근무처·시급은 선택 입력이며 업무 화면에서 확인한 시간과 시급 입력분의 예상 금액을 봅니다. 실제 입금이나 급여로 자동 처리하지 않습니다. 선택 정보는 접어두어 일반 기록 입력 부담을 줄였습니다.
 
 Google Cloud에서 Calendar API와 함께 Tasks API 활성화 및 선택 읽기 범위 동의가 필요합니다. 자세한 설정·사용·검증은 `GOOGLE_CALENDAR_SETUP.md`에 있습니다. Google 실제 계정 동의와 원격 게시·배포는 아직 수행하지 않았습니다.
+
+## 월별 추가 알바 수입
+
+기존 CEO Diary의 `[알바] … (50)` 표기를 50만원의 건별 총액으로 읽습니다. 사용자 확인 전에는 합산하지 않으며 수행일 기준 확정 수입과 실제 입금일 기준 수입을 구분합니다. 미래 예정과 미입금도 따로 표시합니다. 시급 예상 금액과 제목의 총액을 중복 계산하지 않습니다. 돈 화면에서 월별·연도별로 보고 홈에서도 이번 달 요약을 확인합니다. 지출 기록이나 새 Supabase SQL은 필요하지 않습니다.
+
+배포 파일에 `income-format.js`를 함께 포함합니다. 자세한 규칙과 검증은 `GOOGLE_CALENDAR_SETUP.md`에 있습니다. 아직 원격 게시·배포하지 않았습니다.

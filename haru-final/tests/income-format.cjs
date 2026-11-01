@@ -1,0 +1,7 @@
+const assert=require('node:assert/strict');
+const {parseAlbaTitle:parse,summarize,receipt}=require('../income-format.js');
+for(const [title,amount] of [['[알바] 투자 심사 (50)',500000],['[ 알바 ] 멘토링 (50만원)',500000],['[알바] 강의 (50.5)',505000],['[알바] 자문 (1,000)',10000000],['[알바] 발표 (500,000원)',500000],['[알바] 발표（0.0001）',1],['[알바] 무료 강연 (0)',0]])assert.equal(parse(title).amountWon,amount,title);
+for(const title of ['미팅 (50)','[업무] 인원 (50)','[알바] 미정 (?)','[알바] 금액없음','[알바] 환불 (-50)','[알바] 사람 (50명)','[알바] 오타 (1,00)','[알바] 소액 (0.00001)','[알바] 너무큰액 (99999999999999)'])assert.equal(parse(title).amountWon,null,title);
+const rows=[{date:'2026-01-20',amount:'500000',stage:'earned',done:true,receivedDate:'2026-02-05',receivedAmount:'483500'},{date:'2026-02-02',amount:'200000',stage:'earned',done:false},{date:'2026-02-15',amount:'900000',stage:'expected',done:false},{date:'2026-02-06',amount:'100000',done:true}];
+assert.equal(summarize(rows,'2026-01').earned,500000);assert.equal(summarize(rows,'2026-01').received,0);assert.equal(summarize(rows,'2026-02').earned,300000);assert.equal(summarize(rows,'2026-02').received,583500);assert.equal(summarize(rows,'2026-02').expected,900000);assert.equal(summarize(rows,'2026-02').unpaid,200000);assert.equal(receipt({date:'2026-02-01',amount:'500000',stage:'earned',done:true}),null);
+console.log('PASS: tagged flat fees, won/만원, decimals/commas/unknown inputs, performed month vs received month, forecasts excluded, legacy records.');
