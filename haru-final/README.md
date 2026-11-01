@@ -114,3 +114,6 @@ Google Cloud에서 Calendar API와 함께 Tasks API 활성화 및 선택 읽기 
 홈의 Google 일정/Tasks는 검토 대기 항목을 각각 최대 2개로 요약합니다. 항목을 확인해 반영하거나 하루 목록에서만 숨길 수 있고 캘린더에서 복원합니다. 숨겨도 Google 원본·확정 기록·시간 분석의 원본 계획 데이터는 유지됩니다. 캘린더 탭은 주간 시간표와 날짜별/월간 시각화가 기본이며 상세 목록은 접혀 있습니다.
 
 새로고침은 계정/클라이언트/만료일을 확인해 탭 세션을 복원합니다. 접근 토큰은 sessionStorage에만 두고 로그아웃 시 삭제합니다. 장기 자동 갱신은 `supabase/003_google_connections.sql`과 `supabase/functions/google-connect/index.ts` 및 Google 보안 키 설정이 필요합니다. 관리자 절차는 [장기 연결 설정](supabase/GOOGLE_PERSISTENT_SETUP.md)을 참고하세요. 해당 서버 설정 없이 무기한 연결되는 것은 아닙니다.
+
+
+`메모` 캘린더는 일정과 분리합니다. 연결 설정에서 표시 방식을 선택할 수 있습니다. 메모는 홈/날짜별 메모에 표시하고 시간표·시간 통계·알바 수입 후보에서 제외합니다. 확인한 메모만 자유 기록으로 가져오며 추가 SQL·Google 권한은 필요 없습니다.
