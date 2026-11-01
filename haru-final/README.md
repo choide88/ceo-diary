@@ -68,7 +68,7 @@ Google Cloud에서 Calendar API와 함께 Tasks API 활성화 및 선택 읽기 
 
 기존 CEO Diary의 `[알바] … (50)` 표기를 50만원의 건별 총액으로 읽습니다. 사용자 확인 전에는 합산하지 않으며 수행일 기준 확정 수입과 실제 입금일 기준 수입을 구분합니다. 미래 예정과 미입금도 따로 표시합니다. 시급 예상 금액과 제목의 총액을 중복 계산하지 않습니다. 돈 화면에서 월별·연도별로 보고 홈에서도 이번 달 요약을 확인합니다. 지출 기록이나 새 Supabase SQL은 필요하지 않습니다.
 
-배포 파일에 `income-format.js`를 함께 포함합니다. 자세한 규칙과 검증은 `GOOGLE_CALENDAR_SETUP.md`에 있습니다. 아직 원격 게시·배포하지 않았습니다.
+배포 파일에 `income-format.js`를 함께 포함합니다. 자세한 규칙과 검증은 `GOOGLE_CALENDAR_SETUP.md`에 있습니다. GitHub Pages에서는 `/haru-final/` 주소로 사용합니다.
 
 ## 홈 요약과 상세 시간 분석
 
