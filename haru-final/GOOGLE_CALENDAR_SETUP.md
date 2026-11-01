@@ -99,3 +99,49 @@ Google Cloud Console의 **Google Auth Platform**에서 설정합니다. 콘솔 �
 - https://developers.google.com/identity/oauth2/web/guides/get-google-api-clientid
 - https://developers.google.com/workspace/calendar/api/v3/reference/calendarList/list
 - https://developers.google.com/workspace/calendar/api/v3/reference/events/list
+
+## Google Tasks 추가 — 확인하고 반영
+
+Google Tasks도 사용할 경우 같은 Google Cloud 프로젝트에서 **Google Tasks API**를 추가로 사용 설정합니다.
+
+- 활성화 페이지: https://console.cloud.google.com/apis/library/tasks.googleapis.com
+- Google Auth Platform의 데이터 액세스 범위에 `https://www.googleapis.com/auth/tasks.readonly`를 추가합니다.
+- 새 Client secret이나 별도의 Supabase SQL은 필요 없습니다. 같은 공개 OAuth 클라이언트 ID를 사용합니다.
+- 앱의 연결 설정에서 **Google Tasks 할 일도 읽기 전용으로 연결**을 선택하거나, 캘린더 연결 후 **Google Tasks 연결**을 누릅니다. 추가 읽기 동의는 사용자가 버튼을 눌렀을 때만 요청합니다.
+- Tasks 권한을 거절해도 Calendar의 두 읽기 권한이 있으면 캘린더는 사용할 수 있습니다. Tasks API 오류도 일정 조회를 막지 않습니다.
+
+### Google Tasks를 원본으로 쓰는 흐름
+
+1. Google Tasks에서 할 일을 작성합니다.
+2. 하루에서 읽어온 목록은 **검토 대기**로 표시됩니다. 이 단계에서는 내 업무·완료 통계에 들어가지 않습니다.
+3. **확인하고 반영**을 눌러 제목·활동·기한·본업/알바 등 구분·메모·완료 여부를 확인합니다.
+4. **확인한 내용만 반영**을 눌러야 내 업무에 저장됩니다. 취소하면 아무것도 저장하지 않습니다.
+5. 원본이 바뀌면 **변경사항 검토**에서 다시 확인합니다. 동일한 Google Tasks 항목은 새로 추가하지 않고 기존 기록을 수정합니다.
+
+현재는 Google Calendar와 Tasks 모두 읽기 전용입니다. 하루에서 업무를 수정하거나 완료해도 Google Tasks 원본으로 쓰지 않습니다. 원본 삭제·완료·기한 변경도 사용자 확인 없이 내 기록을 덮어쓰지 않습니다.
+
+미완료 할 일을 기본으로 조회합니다. Google 웹·모바일 앱에서 완료한 항목도 보려면 **완료한 할 일도 보기**를 선택합니다. API의 `showCompleted`와 `showHidden`을 함께 켭니다. 목록이 너무 많으면 표시할 목록을 좁히거나 미완료만 조회하세요. Tasks 기한은 날짜이며, 시각이나 한국 시간으로 재변환하지 않습니다.
+
+Tasks 조회 결과와 OAuth 토큰은 페이지 메모리에만 있습니다. 확인한 업무와 원본 식별 정보만 기존 Supabase 기록에 저장합니다.
+
+## 알바 기록
+
+캘린더의 끝난 일정에서 **실제 시간 확인 → 기록 분류: 알바**를 선택합니다. 활동과 제목·날짜를 확인하고 실제 근무한 분을 입력합니다.
+
+- 알바명·근무처와 시급은 선택 항목입니다.
+- 휴게시간을 제외한 실제 근무시간을 직접 확인합니다.
+- 예상 금액은 `실제 분 ÷ 60 × 입력 시급`을 원 단위로 반올림한 값입니다.
+- 시급을 적지 않은 기록을 0원 수입으로 판단하지 않습니다. 합계는 시급을 입력한 기록만 계산하고 입력 건수를 표시합니다.
+- 세금·수당·계약 조건은 자동 계산하지 않으며 실제 입금이나 확정 급여가 아닙니다.
+- 업무 화면의 **알바 기록**에서 날짜별 내역, 이번 달 실제 시간, 시급 입력분의 예상 금액을 봅니다. **알바 기록 ＋**로 직접 입력할 수도 있습니다.
+- 실제 시간을 수정하면 예상 금액도 다시 계산합니다. 실제 수입 데이터에 자동 입금 기록을 만들지 않습니다.
+- Google Tasks에서 알바 준비를 완료했다고 근무시간·예상 수입을 자동 생성하지 않습니다.
+
+### 추가 검증
+
+`tests/google-tasks.cjs`는 모사 API로 읽기 전용 요청, 목록/할 일 페이지 처리, 검토 취소·확인, 기한 날짜, 역할 매핑, 원본 완료 상태의 명시적 재반영, 중복 방지, 일부 목록 실패, Tasks 동의 거절, 알바 계산·수정, 자동 입금 기록 미생성, 모바일을 검증합니다. 실제 Google 계정 연결이나 원격 게시를 수행한 것은 아닙니다.
+
+공식 Tasks 자료:
+
+- https://developers.google.com/workspace/tasks/reference/rest/v1/tasklists/list
+- https://developers.google.com/workspace/tasks/reference/rest/v1/tasks/list

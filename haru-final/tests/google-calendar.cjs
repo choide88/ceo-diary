@@ -52,7 +52,7 @@ const calendarA='primary@example.test',calendarB='team+work@example.test';
   }
   return reply(404,{});
  });
- const saved=()=>p.locator('#cloud-status').filter({hasText:'서버 저장 완료'}).waitFor();
+ let saveStep=0;const saved=async()=>{saveStep++;try{await p.locator('#cloud-status').filter({hasText:'서버 저장 완료'}).waitFor({timeout:5000});}catch(e){throw Error('save step '+saveStep+' status '+await p.locator('#cloud-status').innerText()+' dialog '+await p.locator('dialog[open]').innerText().catch(()=>''));}};
  const login=async(email)=>{await p.locator('#cloud-login-form [name=email]').fill(email);await p.locator('#cloud-login-form [name=password]').fill('mock-password');await p.locator('#cloud-login-form button').click();await p.locator('#nav [data-page=home]').waitFor();};
  await p.goto(SITE);await login('a@example.test');await p.locator('.google-calendar [data-gcal=settings]').click();await p.locator('#calendar-settings-form [name=clientId]').fill(CLIENT);await p.locator('#calendar-settings-form button.primary').click();await saved();await p.waitForFunction(()=>!!window.google?.accounts?.oauth2);await p.getByRole('button',{name:'Google Calendar 연결',exact:true}).click();await p.locator('.google-calendar').getByText('읽기 전용 연결',{exact:true}).waitFor();
  await p.locator('#nav [data-page=calendar]').click();await p.locator('.calendar-event').filter({hasText:'투자 검토'}).waitFor();
