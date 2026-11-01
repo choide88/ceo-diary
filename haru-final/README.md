@@ -107,3 +107,10 @@ Google Cloud에서 Calendar API와 함께 Tasks API 활성화 및 선택 읽기 
 근거와 예시는 돈 화면의 접힌 설명에서 확인할 수 있습니다. CFPB의 Your Money, Your Goals 도구(목표 설정·실행·재검토)와 비상자금 가이드(안전성과 접근성·정기 적립·진행 확인)를 응용했습니다. Thaler & Benartzi (2004), Save More Tomorrow, DOI 10.1086/380085는 미래 급여 인상 시 저축 증액을 미리 약속하는 직원 퇴직저축 연구입니다. 불규칙 추가 수입에 배분 규칙을 쓰는 것은 이 앱의 응용이며 같은 효과가 검증됐다고 주장하지 않습니다. CFPB 원문은 확인했고 해당 연구의 서지는 Crossref로 확인했습니다(저널 본문 접근은 제한됨).
 
 검증: `node tests/money-goals.cjs`, Playwright `tests/money-goals-browser.cjs`(모의 Supabase 계정 저장). 실제 계정 금융 연동·송금·자동 이체 기능은 없습니다.
+
+
+### Google 연결 유지와 화면 개선
+
+홈의 Google 일정/Tasks는 검토 대기 항목을 각각 최대 2개로 요약합니다. 항목을 확인해 반영하거나 하루 목록에서만 숨길 수 있고 캘린더에서 복원합니다. 숨겨도 Google 원본·확정 기록·시간 분석의 원본 계획 데이터는 유지됩니다. 캘린더 탭은 주간 시간표와 날짜별/월간 시각화가 기본이며 상세 목록은 접혀 있습니다.
+
+새로고침은 계정/클라이언트/만료일을 확인해 탭 세션을 복원합니다. 접근 토큰은 sessionStorage에만 두고 로그아웃 시 삭제합니다. 장기 자동 갱신은 `supabase/003_google_connections.sql`과 `supabase/functions/google-connect/index.ts` 및 Google 보안 키 설정이 필요합니다. 관리자 절차는 [장기 연결 설정](supabase/GOOGLE_PERSISTENT_SETUP.md)을 참고하세요. 해당 서버 설정 없이 무기한 연결되는 것은 아닙니다.

@@ -2,7 +2,7 @@ const {PGlite}=require('@electric-sql/pglite');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 (async()=>{
  const db=new PGlite();
- await db.exec(`create role anon;create role authenticated;create schema auth;
+ await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;
  create table auth.users(id uuid primary key,email text);
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  grant usage on schema auth to anon,authenticated;
@@ -26,5 +26,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  await identity('', 'anon');await rejects(()=>db.query('select * from public.haru_documents'),/permission denied/);await rejects(()=>save(payload,0),/permission denied/);
  await db.exec('reset role');await db.exec(sql);assert.equal((await db.query('select count(*)::int as n from public.haru_documents')).rows[0].n,2);
  await identity(A);assert.equal((await db.query('select version from public.haru_documents')).rows[0].version,2);
- console.log('PASS: PostgreSQL RLS, private membership, anonymous denial, direct-write denial, version conflicts, validation, repeatable migration.');await db.close();
+ await db.exec('reset role');const googleSQL=fs.readFileSync(path.join(__dirname,'../supabase/003_google_connections.sql'),'utf8');await db.exec(googleSQL);await db.exec(googleSQL);
+ await db.query('insert into public.haru_google_connections(user_id,encrypted_refresh,client_id,scopes) values($1,$2,$3,$4)',[A,'ciphertext','client','scope']);
+ for(const role of ['anon','authenticated']){await identity(A,role);for(const table of ['haru_google_connections','haru_google_oauth_states']){await rejects(()=>db.query('select * from public.'+table),/permission denied/);await rejects(()=>db.query('delete from public.'+table),/permission denied/);}}
+ await identity(A,'service_role');assert.equal((await db.query('select * from public.haru_google_connections')).rows.length,1);
+ console.log('PASS: PostgreSQL RLS, private membership, anonymous denial, direct-write denial, version conflicts, validation, repeatable migration, OAuth tables inaccessible to browsers.');await db.close();
 })().catch(e=>{console.error(e.message);process.exit(1)});

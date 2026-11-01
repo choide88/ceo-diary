@@ -48,6 +48,7 @@
         const text = typeof body?.message==='string'?body.message:'';
         if (text.includes('HARU_CONFLICT')) throw error('CONFLICT','다른 기기에서 기록이 변경되었습니다.');
         if (text.includes('HARU_ACCESS_DENIED')) throw error('ACCESS','이 계정의 사용 권한이 아직 등록되지 않았습니다.');
+        if(path==='/functions/v1/google-connect'&&res.status!==401)throw error('GOOGLE',typeof body?.message==='string'?body.message:'장기 연결 서버 설정이 필요합니다.');
         if (res.status===401) throw error('AUTH','로그인이 만료되었습니다. 다시 로그인해주세요.');
         if (res.status===403) throw error('ACCESS','데이터 접근이 거부되었습니다. 계정 권한을 확인해주세요.');
         if (res.status===404 || ['PGRST202','PGRST205','42P01'].includes(body?.code)) throw error('SCHEMA','서버 테이블 설정이 필요합니다. 설정 안내의 SQL을 먼저 실행해주세요.');
@@ -253,5 +254,5 @@
     if(e.target.id==='cloud-login-form'){e.preventDefault();const email=e.target.email.value.trim(),password=e.target.password.value;e.target.password.value='';void login(email,password);}
   });
   window.addEventListener('beforeunload',e=>{if(pending&&loaded){e.preventDefault();e.returnValue='';}});
-  window.HaruSync=Object.freeze({start,commit,getUserId:()=>user?.id||null,isLoaded:()=>loaded,isCloud:()=>!DEMO,gate:()=>!loaded,gateHTML,repaint,accountPanel});
+  window.HaruSync=Object.freeze({google:(action,data={})=>request('/functions/v1/google-connect',{method:'POST',body:JSON.stringify({action,...data})}),start,commit,getUserId:()=>user?.id||null,isLoaded:()=>loaded,isCloud:()=>!DEMO,gate:()=>!loaded,gateHTML,repaint,accountPanel});
 })();
