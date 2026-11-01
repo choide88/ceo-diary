@@ -15,3 +15,5 @@
 .time-week-label{text-align:center;color:#8e9e92;font-size:10px;padding:4px 0}
 
 .relation-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}#relationPersonForm details{padding:12px;background:var(--bg,#f5f7f6);border-radius:10px}#relationPersonForm summary{cursor:pointer;margin-bottom:12px}
+
+.money-goal progress{width:100%;height:9px;accent-color:#306c59}.money-goal details,.money-methods{margin-top:16px}.money-methods{padding:16px;background:#f5f7f6;border-radius:12px}.money-methods summary,.money-goal summary{cursor:pointer}.money-methods article{margin:18px 0}.money-methods p{margin:10px 0;line-height:1.8}.money-goal p{overflow-wrap:anywhere}
