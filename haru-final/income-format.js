@@ -20,9 +20,9 @@
   return {tagged:true,title:title||'추가 알바 수입',amountWon};
  }
  function knownAmount(value){if(value===''||value===null||value===undefined)return null;const n=Number(value);return Number.isSafeInteger(n)&&n>=0&&n<=LIMIT?n:null;}
- function stage(row){return row.stage==='earned'||row.stage==='expected'?row.stage:row.done?'earned':'expected';}
+ function stage(row){return ['earned','expected','draft'].includes(row.stage)?row.stage:row.done?'earned':'expected';}
  function receipt(row){
-  if(!row.done)return null;
+  if(!row.done||stage(row)==='draft')return null;
   const legacy=row.stage===undefined;const date=row.receivedDate||(legacy?row.date:'');
   const amount=knownAmount(row.receivedAmount!==undefined&&row.receivedAmount!==''?row.receivedAmount:legacy?row.amount:null);
   return /^\d{4}-\d{2}-\d{2}$/.test(date||'')&&amount!==null?{date,amount}:null;
@@ -30,9 +30,10 @@
  function summarize(rows,month){
   const earned=rows.filter(r=>r.date?.slice(0,7)===month&&stage(r)==='earned');
   const expected=rows.filter(r=>r.date?.slice(0,7)===month&&stage(r)==='expected');
+  const drafts=rows.filter(r=>r.date?.slice(0,7)===month&&stage(r)==='draft');
   const paid=rows.map(r=>receipt(r)).filter(r=>r&&r.date.slice(0,7)===month);
   const total=list=>list.reduce((sum,r)=>sum+(knownAmount(r.amount)??0),0);
-  return {earned:total(earned),earnedCount:earned.length,expected:total(expected),expectedCount:expected.length,received:paid.reduce((sum,r)=>sum+r.amount,0),receivedCount:paid.length,unpaid:total(earned.filter(r=>!r.done)),unpaidCount:earned.filter(r=>!r.done).length};
+  return {draft:total(drafts),draftCount:drafts.length,earned:total(earned),earnedCount:earned.length,expected:total(expected),expectedCount:expected.length,received:paid.reduce((sum,r)=>sum+r.amount,0),receivedCount:paid.length,unpaid:total(earned.filter(r=>!r.done)),unpaidCount:earned.filter(r=>!r.done).length};
  }
  const api=Object.freeze({parseAlbaTitle,knownAmount,stage,receipt,summarize,LIMIT});
  if(typeof module==='object'&&module.exports)module.exports=api;else root.HaruIncomeFormat=api;
