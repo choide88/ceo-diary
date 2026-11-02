@@ -28,12 +28,27 @@
     let fields=select('destination',kind==='event'?'저장할 Google 캘린더':'저장할 Google Tasks 목록',destination,destinations.map(d=>[d.id,kind==='event'?d.summary||'캘린더':d.title||'할 일 목록']),editing)+input('title','제목',source.summary||source.title||'','text','required maxlength="1000"');
     if(kind==='event')fields+=`<label class="check"><input name="allDay" type="checkbox" ${allDay?'checked':''}><span>종일 일정</span></label><div class="google-time-fields" ${allDay?'hidden':''}>${input('start','시작 · 한국 시간',source.start?.dateTime?local(source.start.dateTime):ctx.today+'T09:00','datetime-local')}${input('end','종료 · 한국 시간',source.end?.dateTime?local(source.end.dateTime):ctx.today+'T10:00','datetime-local')}</div><div class="google-date-fields" ${allDay?'':'hidden'}>${input('dayStart','시작일',dayStart,'date')}${input('dayEnd','마지막 날 · 포함',dayEnd,'date')}</div>${input('location','장소 · 선택',source.location||'','text','maxlength="1000"')}${textarea('description','상세 메모 · 선택',source.description||'')}`;
     else fields+=input('due','기한 · 선택, 비우면 날짜 없음',source.due?.slice(0,10)||'','date')+select('status','완료 상태',source.status||'needsAction',[['needsAction','미완료'],['completed','완료']])+textarea('notes','상세 메모 · 선택',source.notes||'');
-    ctx.modal(editing?'Google 원본 수정':'Google에 새로 추가',`<p class="intro">아래 저장 버튼을 누르면 <b>Google ${kind==='event'?'캘린더':'Tasks'} 원본에 ${editing?'수정':'추가'}</b>됩니다.${source.recurringEventId?' 반복 일정 중 선택한 이번 회차만 수정합니다.':''}</p><form id="google-original-form">${fields}<p class="muted">시크릿에 이미 확인한 실제 시간·수입·기록은 그대로 유지됩니다. 필요하면 따로 검토해주세요.</p><p id="google-write-error" class="error" role="alert"></p><div class="form-actions"><button type="button" data-gcal="close" class="quiet">취소</button><button class="primary">${editing?'Google 원본에 수정 저장':'Google에 추가'}</button></div></form>`);
+    ctx.modal(editing?'Google 원본 수정':'Google에 새로 추가',`<p class="intro">아래 저장 버튼을 누르면 <b>Google ${kind==='event'?'캘린더':'Tasks'} 원본에 ${editing?'수정':'추가'}</b>됩니다.${source.recurringEventId?' 반복 일정 중 선택한 이번 회차만 수정합니다.':''}</p><form id="google-original-form">${fields}<p class="muted">시크릿에 이미 확인한 실제 시간·수입·기록은 그대로 유지됩니다. 필요하면 따로 검토해주세요.</p><p id="google-write-error" class="error" role="alert"></p><div class="form-actions">${editing?'<button type="button" class="delete" id="google-delete-open">Google 원본 삭제</button>':''}<button type="button" data-gcal="close" class="quiet">취소</button><button class="primary">${editing?'Google 원본에 수정 저장':'Google에 추가'}</button></div></form>`);
     const form=document.querySelector('#google-original-form');
     form.addEventListener('change',e=>{if(e.target.name==='allDay'){form.querySelector('.google-time-fields').hidden=e.target.checked;form.querySelector('.google-date-fields').hidden=!e.target.checked;}});
     let busy=false,uncertain=false;
+    form.querySelector('#google-delete-open')?.addEventListener('click',()=>{
+      if(busy||uncertain||!ctx.current())return;
+      // Keep the form mounted so the existing submit handler cannot save after choosing delete.
+      const confirm=document.createElement('section');confirm.className='google-delete-confirm';
+      confirm.innerHTML=`<h3>Google 원본을 삭제할까요?</h3><p><b>${esc(source.summary||source.title)}</b></p><p>${source.recurringEventId?'반복 일정 중 선택한 이번 회차만 삭제합니다.':'Google 원본에서 삭제됩니다.'}${kind==='task'?' 하위 할 일이 있으면 함께 삭제될 수 있습니다.':''} 시크릿에 이미 저장한 실제 시간·수입·기록은 유지됩니다.</p><p class="error" role="alert"></p><div class="form-actions"><button type="button" class="outline" data-delete-cancel>돌아가기</button><button type="button" class="delete" data-delete-confirm>Google에서 삭제하기</button></div>`;
+      form.classList.add('google-delete-mode');Array.from(form.children).forEach(el=>el.hidden=true);form.append(confirm);
+      confirm.querySelector('[data-delete-cancel]').onclick=()=>{if(uncertain){ctx.close();return;}form.classList.remove('google-delete-mode');confirm.remove();Array.from(form.children).forEach(el=>el.hidden=false);const toggle=form.elements.allDay;if(toggle){form.querySelector('.google-time-fields').hidden=toggle.checked;form.querySelector('.google-date-fields').hidden=!toggle.checked;}};
+      confirm.querySelector('[data-delete-confirm]').onclick=async()=>{
+        if(busy||uncertain||!ctx.current())return;busy=true;confirm.querySelectorAll('button').forEach(b=>b.disabled=true);
+        const dialog=document.querySelector('#calendar-dialog'),closer=dialog.querySelector('.close'),prevent=e=>e.preventDefault();closer.disabled=true;dialog.addEventListener('cancel',prevent);
+        try{await ctx.request(path+(kind==='event'?'?sendUpdates=none':''),'DELETE',null,source.etag);if(ctx.current()){ctx.close();ctx.toast('Google 원본을 삭제했어요. 저장한 시크릿 기록은 유지됩니다.');await ctx.saved(destination);}}
+        catch(error){if(ctx.current()){confirm.querySelector('.error').textContent=error.message;uncertain=/결과|응답|저장 여부/.test(error.message);}}
+        finally{busy=false;closer.disabled=false;dialog.removeEventListener('cancel',prevent);confirm.querySelectorAll('button').forEach(b=>b.disabled=false);if(uncertain){confirm.querySelector('[data-delete-confirm]').disabled=true;confirm.querySelector('[data-delete-cancel]').textContent='닫기';}}
+      };
+    });
     form.addEventListener('submit',async e=>{
-      e.preventDefault();if(busy||uncertain)return;const errorEl=form.querySelector('#google-write-error');errorEl.textContent='';
+      e.preventDefault();if(busy||uncertain||form.querySelector('.google-delete-confirm'))return;const errorEl=form.querySelector('#google-write-error');errorEl.textContent='';
       if(!ctx.current()){errorEl.textContent='연결이 바뀌었습니다. 다시 연결해주세요.';return;}
       const f=new FormData(form),title=String(f.get('title')||'').trim(),target=editing?destination:String(f.get('destination')||'');
       if(!title||!destinations.some(d=>d.id===target)){errorEl.textContent='제목과 저장할 곳을 확인해주세요.';return;}
