@@ -14,10 +14,19 @@
    - `GOOGLE_TOKEN_KEY`: 암호화 키. `openssl rand -base64 32`로 생성한 32바이트 키를 입력합니다. 값을 바꾸면 기존 연결은 다시 동의해야 합니다.
    - `HARU_APP_URL`: `https://choide88.github.io/ceo-diary/haru-final/`
    - `SUPABASE_URL`과 `SUPABASE_SERVICE_ROLE_KEY`는 Supabase 함수 런타임의 기본 환경변수를 사용합니다. 프런트엔드로 복사하지 않습니다.
-5. 하루 로그인 → Google ‘연결 설정’에서 Tasks 사용 여부 저장 → **계속 연결하기** → 본인 Google 계정으로 한 번 다시 동의합니다.
+5. 시크릿 로그인 → Google ‘연결 설정’에서 Tasks 사용 여부 저장 → **계속 연결하기** → 본인 Google 계정으로 한 번 다시 동의합니다.
 
 CLI를 사용하는 경우 이 폴더를 Supabase 프로젝트에 연결한 뒤 `supabase functions deploy google-connect --no-verify-jwt`를 실행할 수 있습니다. 비밀 값은 Dashboard Secrets 또는 git에 포함하지 않는 별도 env 파일을 사용하세요.
 
 Google 앱이 외부 ‘테스트’ 상태이고 Calendar/Tasks 범위를 요청하면 refresh token은 일반적으로 7일 후 만료됩니다. 개인 사용이어도 장기 이용에는 Google의 게시 상태·민감한 범위 정책을 확인해야 합니다. 권한 취소, 계정 보안 변경 등에는 다시 동의가 필요할 수 있습니다. 완전 무기한 연결을 보장하지 않습니다.
 
 보안: OAuth state는 무작위 생성 후 해시로 보관하며 10분 내 1회만 사용합니다. 갱신 토큰은 계정 ID를 추가 인증 데이터로 사용한 AES-GCM으로 암호화합니다. 일반 일기 백업에는 포함되지 않습니다. 해제 시 서버 연결과 대기 OAuth state를 삭제하고 Google 권한 해제를 시도합니다.
+
+
+## 추가·수정 권한을 장기 연결에도 유지하기
+
+기존에 읽기 전용 서버를 배포했다면 최신 `functions/google-connect/index.ts`로 **google-connect 함수를 다시 배포**합니다. SQL 변경이나 키 재생성은 필요 없습니다. 이 웹앱 작업 환경에는 Supabase 관리자 인증이 없어 함수의 원격 재배포를 수행할 수 없습니다.
+
+Google Cloud 데이터 액세스에 `https://www.googleapis.com/auth/calendar.events`와 Tasks 사용 시 `https://www.googleapis.com/auth/tasks`도 추가합니다. 시크릿에서 **추가·수정 권한 연결** 후 **계속 연결하기**로 다시 동의합니다. 최신 서버는 요청한 경우에만 수정 범위를 추가하고, 토큰 갱신 응답의 실제 scope 목록을 웹에 전달합니다. 이전 읽기 연결과도 호환하며 비밀 키·갱신 토큰을 웹에 전달하지 않습니다.
+
+웹앱에서 팝업으로 추가·수정 권한을 연결하는 기능은 서버 재배포 전에도 사용할 수 있습니다. 이전 서버가 토큰을 갱신하면 수정 권한 상태가 읽기로 돌아갈 수 있으므로 장기 사용에는 위 재배포가 필요합니다.

@@ -3,6 +3,9 @@ import {createClient} from 'npm:@supabase/supabase-js@2';
 const env=(name:string)=>{const value=Deno.env.get(name);if(!value)throw Error('CONFIG');return value};
 const errorCode=(e:unknown)=>e instanceof Error?e.message:'';
 const CAL=['https://www.googleapis.com/auth/calendar.events.readonly','https://www.googleapis.com/auth/calendar.calendarlist.readonly'];
+const EVENT_WRITE='https://www.googleapis.com/auth/calendar.events',TASK_WRITE='https://www.googleapis.com/auth/tasks';
+const calendarRead=(scopes:string[])=>scopes.includes(CAL[1])&&(scopes.includes(CAL[0])||scopes.includes(EVENT_WRITE)||scopes.includes('https://www.googleapis.com/auth/calendar'));
+const tasksRead=(scopes:string[])=>scopes.includes(TASK)||scopes.includes(TASK_WRITE);
 const TASK='https://www.googleapis.com/auth/tasks.readonly';
 const bytes=(s:string)=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const base64=(b:Uint8Array)=>btoa(String.fromCharCode(...b));
@@ -31,7 +34,7 @@ Deno.serve(async request=>{
    const {data:member}=await db.from('haru_members').select('user_id').eq('user_id',row.user_id).maybeSingle();if(!member)return redirect(false);
    const code=url.searchParams.get('code');if(!code)return redirect(false);
    const data=await googleToken({code,grant_type:'authorization_code',redirect_uri:redirectUri});
-   const scopes=String(data.scope||'').split(' ');if(!CAL.every(s=>scopes.includes(s))||(row.enable_tasks&&!scopes.includes(TASK)))return redirect(false);
+   const scopes=String(data.scope||'').split(' ');if(!calendarRead(scopes)||(row.enable_tasks&&!tasksRead(scopes)))return redirect(false);
    if(!data.refresh_token)return redirect(false);
    const saved=await db.from('haru_google_connections').upsert({user_id:row.user_id,encrypted_refresh:await encrypt(data.refresh_token,row.user_id),client_id:clientId,scopes:scopes.join(' '),updated_at:new Date().toISOString()});if(saved.error)return redirect(false);return redirect(true);
   }
@@ -45,7 +48,7 @@ Deno.serve(async request=>{
    const state=base64(crypto.getRandomValues(new Uint8Array(32))).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');
    await db.from('haru_google_oauth_states').delete().lt('expires_at',new Date().toISOString());
    const stored=await db.from('haru_google_oauth_states').insert({state_hash:await hash(state),user_id:user.id,enable_tasks:body.enableTasks===true,expires_at:new Date(Date.now()+600000).toISOString()});if(stored.error)throw Error('CONFIG');
-   const auth=new URL('https://accounts.google.com/o/oauth2/v2/auth');auth.search=new URLSearchParams({client_id:clientId,redirect_uri:redirectUri,response_type:'code',scope:[...CAL,...(body.enableTasks===true?[TASK]:[])].join(' '),access_type:'offline',prompt:'consent select_account',include_granted_scopes:'false',state}).toString();return reply(200,{url:auth.href});
+   const auth=new URL('https://accounts.google.com/o/oauth2/v2/auth');auth.search=new URLSearchParams({client_id:clientId,redirect_uri:redirectUri,response_type:'code',scope:[...CAL,...(body.enableWrite===true?[EVENT_WRITE]:[]),...(body.enableTasks===true?[TASK,...(body.enableWrite===true?[TASK_WRITE]:[])]:[])].join(' '),access_type:'offline',prompt:'consent select_account',include_granted_scopes:'false',state}).toString();return reply(200,{url:auth.href});
   }
   const {data:connection,error:readError}=await db.from('haru_google_connections').select().eq('user_id',user.id).maybeSingle();if(readError)throw Error('CONFIG');
   if(body.action==='disconnect'){
@@ -58,6 +61,6 @@ Deno.serve(async request=>{
   // Google may rotate the refresh token. Compare old ciphertext so disconnect/concurrent renewals cannot recreate a removed grant.
   if(data.refresh_token){const saved=await db.from('haru_google_connections').update({encrypted_refresh:await encrypt(data.refresh_token,user.id),updated_at:new Date().toISOString()}).eq('user_id',user.id).eq('encrypted_refresh',connection.encrypted_refresh).select('user_id');if(saved.error||!saved.data?.length)return reply(409,{message:'연결이 변경되었습니다. 다시 연결해주세요.'});}
   const {data:stillConnected}=await db.from('haru_google_connections').select('user_id').eq('user_id',user.id).maybeSingle();if(!stillConnected)return reply(409,{message:'Google 연결이 해제되었습니다.'});
-  const scopes=String(data.scope||connection.scopes).split(' ');if(!CAL.every(s=>scopes.includes(s)))return reply(409,{message:'캘린더 읽기 권한을 다시 허용해주세요.'});return reply(200,{access_token:data.access_token,expires_in:data.expires_in,tasksAllowed:scopes.includes(TASK)});
+  const scopes=String(data.scope||connection.scopes).split(' ');if(!calendarRead(scopes))return reply(409,{message:'캘린더 읽기 권한을 다시 허용해주세요.'});return reply(200,{access_token:data.access_token,expires_in:data.expires_in,tasksAllowed:tasksRead(scopes),scopes});
  }catch(e){if(callback)return redirect(false);return reply(errorCode(e)==='CONFIG'?503:502,{message:errorCode(e)==='CONFIG'?'장기 연결 서버의 SQL·환경변수 설정이 필요합니다.':'Google 연결을 갱신하지 못했습니다. 잠시 후 다시 시도해주세요.'});}
 });

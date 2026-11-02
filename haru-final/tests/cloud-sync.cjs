@@ -35,7 +35,7 @@ const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Obje
  });return c;}
  const newPage=async(c)=>{const p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(SITE);return p;};
  const login=async(p,email)=>{await p.locator('#cloud-login-form [name=email]').fill(email);await p.locator('#cloud-login-form [name=password]').fill('mock-password-not-a-real-credential');await p.locator('#cloud-login-form button').click();await p.locator('[data-life-overview]').waitFor();};
- const note=async(p,text)=>{await p.locator('.topbar [data-action=capture]').click();await p.locator('#modal [data-table=notes]').click();await p.locator('#entityForm [name=text]').fill(text);await p.locator('#entityForm button.primary').click();};
+ const note=async(p,text)=>{await p.locator('.topbar [data-action=capture]').click();await p.locator('#modal [data-table=notes]:not([data-category])').click();await p.locator('#entityForm [name=text]').fill(text);await p.locator('#entityForm button.primary').click();};
  const saved=async(p)=>p.locator('#cloud-status').filter({hasText:'서버 저장 완료'}).waitFor();
  const c1=await context(),p1=await newPage(c1);assert.equal(await p1.locator('[data-life-overview]').count(),0,'login gate must hide records');await login(p1,'a@example.test');await note(p1,'첫 번째 서버 기록');await saved(p1);assert.equal(documents.get(A).version,1);
  // A fresh browser has no local copy but sees the same server account.
