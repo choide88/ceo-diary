@@ -12,5 +12,5 @@ document.addEventListener('change',e=>{if(e.target.id==='capture-images')void re
 document.addEventListener('input',e=>{const row=e.target.closest('[data-capture-row]');if(row)compare(Number(row.dataset.captureRow));});
 document.addEventListener('submit',e=>{if(e.target.id!=='capture-review-form')return;e.preventDefault();const form=e.target;try{if(!current())throw Error('계정이 바뀌었습니다. 다시 업로드해주세요.');const f=new FormData(form),drafts=rows.map((d,i)=>({use:f.has('use-'+i),target:String(f.get('target-'+i)||''),captureAsOf:String(f.get('date-'+i)||''),row:{kind:d.row.kind,...Object.fromEntries(S().fields[d.row.kind].map(k=>[k,String(f.get(k+'-'+i)||'')]))}}));if(!drafts.some(d=>d.use))throw Error('반영할 항목을 체크해주세요.');const stamp=new Date().toISOString();if(ctx.commit(n=>{const next=S().apply(n,drafts,ctx.today(),ctx.id,stamp);n.loans=next.loans;n.investments=next.investments;})){ctx.close();discard();ctx.toast('선택한 항목을 반영했습니다. 서버 저장 결과는 상단 동기화 상태에서 확인하세요.');}}catch(e){form.querySelector('.error').textContent=e.message;}});
 document.addEventListener('haru:account',()=>{if(document.querySelector('#capture-images'))ctx?.close();discard();});document.addEventListener('close',e=>{if(e.target.id==='modal')discard();},true);
-window.SecretCaptureUI={start:c=>ctx=c,open};
+window.SecretCaptureUI={start:c=>ctx=c,open,openFiles:files=>{open();void recognize(files);}};
 })();
